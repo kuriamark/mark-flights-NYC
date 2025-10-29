@@ -1,0 +1,309 @@
+---
+title: "Mark_Flights"
+author: "Mark Kuria"
+format:
+  html:
+    number-sections: true
+    embed-resources: true
+---
+    
+This Homework Project works with dataframes in the package `nycflights13` about flights, specifically a sample of domestic flights
+that departed from the three major New York City airports in 2013.
+
+# Data overview
+
+## Package loading
+
+```{r}
+#| label: packages-data
+#| message: false  # We do not want to see the tidyverse loading flightgsmessage in our document
+#| echo: false
+library(tidyverse)
+library(patchwork)            # Install this package before. It helps to combine different plots.
+library(nycflights13)
+```
+
+## Package overview
+
+-   The data package `nycflights13` package contains five tabular data
+    frames. In total there is information about:
+    -   `r nrow(airlines)` **airlines**
+    -   `r nrow(airports)` **airports**
+    -   `r nrow(planes)` **planes**
+    -   `r nrow(flights)` **flights**
+
+The core dataframe `flights` has the following variables:
+
+`year`, `month`, `day`: **Date** of departure.\
+`dep_time`, `arr_time`: Actual **departure** and **arrival** times
+(format HHMM or HMM), local time zone.\
+`sched_dep_time`, `sched_arr_time`: **Scheduled departure** and
+**arrival** times (format HHMM or HMM), local time zone.\
+`dep_delay`, `arr_delay`: **Departure** and **arrival delays**, in
+minutes. Negative times represent early departures/arrivals.\
+`carrier`: Two letter **carrier** abbreviation. See `airlines`-dataframe
+to get the full name.
+
+`flight`: airline’s flight number.\
+`tailnum`: plane’s tail number (unique aircraft ID).\
+`origin`, `dest`: three-letter airport codes for departure and arrival;
+full names/locations are in `airports`.\
+`air_time`: minutes spent in the air.\
+`distance`: distance flown in miles.\
+`hour`, `minute`: scheduled departure hour and minute.\
+`time_hour`: scheduled departure time rounded to the hour (date-time),
+useful for joining with `weather`.
+
+# Basic data visualization
+
+```{r}
+#| label: flightsorigin
+ggplot(data = flights, mapping = aes(x = origin)) + 
+  geom_bar()
+```
+
+In the `flights` dataframe, the `EWR` variable has **120835** rows, the
+`JFK` has **111279** rows, and the LGA airport has **104662** rows,
+resulting in a total of **`r nrow(flights)`** flights
+
+```{r}
+#| label: flightsdistance
+flights %>%
+  ggplot(aes(x = distance, y = arr_delay)) +
+  geom_point(alpha = 0.3, color = "steelblue") +
+  geom_smooth(method = "lm", color = "red") +
+  labs(
+    title = "Relationship Between Flight Distance and Arrival Delay",
+    x = "Flight Distance (miles)",
+    y = "Arrival Delay (minutes)"
+  )
+```
+
+```{r}
+#| label: distributions
+g1 <- ggplot(data = planes, mapping = aes(y = seats, x = 0)) + 
+  geom_point()
+g2 <- ggplot(data = planes, mapping = aes(y = seats)) + 
+  geom_boxplot()
+g3 <- ggplot(data = flights, mapping = aes(y = distance)) +
+    geom_histogram(binwidth = 50)# Make your solution into this line
+g1 + g2 + g3
+```
+
+cool description
+
+```{r}
+#| label: engine-seats
+ planes %>%
+  group_by(engines) %>%
+  summarise(avg_seats = mean(seats, na.rm = TRUE), .groups = "drop") %>%
+  arrange(desc(avg_seats))
+```
+
+```{r}
+#| label: delays
+ggplot(flights, aes(x = origin, y = arr_delay)) +
+  geom_boxplot() +
+  labs(title = "Arrival Delays by NYC Origin Airport",
+       x = "Origin (EWR/JFK/LGA)", y = "Arrival Delay (min)")
+```
+
+```{r}
+# label: airportlocations
+library(dplyr)
+library(ggplot2)
+library(nycflights13)
+
+# NYC airports table
+nyc_airports <- airports %>%
+  filter(faa %in% c("JFK", "LGA", "EWR")) %>%
+  select(faa, name, lat, lon)
+
+nyc_airports
+
+# Quick lon/lat plot (not a map)
+ggplot(nyc_airports, aes(x = lon, y = lat, label = faa)) +
+  geom_point(size = 3) +
+  geom_text(nudge_y = 0.15) +
+  labs(
+    title = "NYC Airport Locations (lon/lat)",
+    x = "Longitude",
+    y = "Latitude"
+  )
+```
+>>>>>>> 73308b367f330fe8bb26f5be8a6d600b0527db44
+
+# NYC airports table
+nyc_airports <- airports %>%
+  filter(faa %in% c("JFK", "LGA", "EWR")) %>%
+  select(faa, name, lat, lon)
+
+nyc_airports
+
+# Quick lon/lat plot (not a map)
+ggplot(nyc_airports, aes(x = lon, y = lat, label = faa)) +
+  geom_point(size = 3) +
+  geom_text(nudge_y = 0.15) +
+  labs(
+    title = "NYC Airport Locations (lon/lat)",
+    x = "Longitude",
+    y = "Latitude"
+  )
+```
+
+# Data Wrangling
+
+```{r}
+#| label: flightsaveragespeed
+flights |>
+  filter(!is.na(air_time), air_time > 0) |>               
+  mutate(                                                  
+    speed_kmh = (distance * 1.609344) / (air_time / 60)   
+  ) |>
+  select(air_time, distance, speed_kmh) |>
+  ggplot(mapping = aes(x = speed_kmh)) +                   
+  geom_histogram(binwidth = 50) +                          
+  labs(
+    title = "Flight speeds (km/h)",
+    x = "Speed (km/h)",
+    y = "Number of flights"
+  )
+
+```
+
+```{r}
+#| label: filtering
+library(dplyr); library(nycflights13)
+
+flights_filtered <- flights %>%
+  filter(dep_delay <= 60, arr_delay <= 60) %>%     # keep reasonably on-time flights
+  select(year:day, carrier, flight, origin, dest, dep_delay, arr_delay, distance)
+
+head(flights_filtered)
+```
+>>>>>>> 73308b367f330fe8bb26f5be8a6d600b0527db44
+
+flights_filtered <- flights %>%
+  filter(dep_delay <= 60, arr_delay <= 60) %>%     # keep reasonably on-time flights
+  select(year:day, carrier, flight, origin, dest, dep_delay, arr_delay, distance)
+
+head(flights_filtered)
+```
+
+```{r}
+#| label: summarizing
+library(dplyr); library(nycflights13)
+
+flights %>%
+  group_by(origin) %>%
+  summarise(
+    n_flights = n(),
+    avg_dep_delay = mean(dep_delay, na.rm = TRUE),
+    avg_arr_delay = mean(arr_delay, na.rm = TRUE)
+  ) %>%
+  arrange(desc(avg_arr_delay))
+```
+
+# Data Audit
+
+```{r}
+#| label: strangeairportlocations
+library(dplyr); library(nycflights13)
+
+# US airports should be lat > 0 and lon < 0; flag the odd ones
+airports %>%
+  filter(lat <= 0 | lon >= 0) %>%
+  select(faa, name, lat, lon)
+```
+## Your own question
+
+<<<<<<< HEAD
+## Your own question
+=======
+## Research Question
+
+Do longer flights have fewer or more arrival delays on average?
+
+## Code and Analysis
+
+```{r}
+#| label: setup-libs
+#| message: false
+#| warning: false
+library(dplyr)
+library(ggplot2)
+library(nycflights13)
+```
+
+# Create distance categories
+flights <- flights %>%
+  mutate(distance_group = case_when(
+    distance < 500 ~ "Short (<500 miles)",
+    distance >= 500 & distance < 1500 ~ "Medium (500–1500 miles)",
+    distance >= 1500 ~ "Long (1500+ miles)"
+  ))
+
+# Average arrival delay by distance group
+avg_delay <- flights %>%
+  group_by(distance_group) %>%
+  summarise(avg_arr_delay = mean(arr_delay, na.rm = TRUE)) %>%
+  arrange(avg_arr_delay)
+
+avg_delay
+
+# Plot the results
+ggplot(avg_delay, aes(x = distance_group, y = avg_arr_delay, fill = distance_group)) +
+  geom_col(show.legend = FALSE) +
+  labs(
+    title = "Average Arrival Delay by Flight Distance (NYC 2013)",
+    x = "Flight Distance Category",
+    y = "Average Arrival Delay (minutes)"
+  )
+```
+### Research Question
+
+Do longer flights have fewer or more arrival delays on average?
+  
+### Code and Analysis
+
+```{r}
+#| label: setup-libs-2
+#| message: false
+#| warning: false
+library(dplyr)
+library(ggplot2)
+library(nycflights13)
+```
+
+```{r}
+#| label: make-distance-groups
+# Create distance categories
+flights2 <- nycflights13::flights |>
+  mutate(
+    distance_group = case_when(
+      distance < 500 ~ "Short (<500 miles)",
+      distance >= 500 & distance < 1500 ~ "Medium (500–1500 miles)",
+      distance >= 1500 ~ "Long (1500+ miles)"
+    )
+  )
+```
+
+```{r}
+#| label: avg-delay-by-group
+# Average arrival delay by distance group
+avg_delay <- flights2 |>
+  group_by(distance_group) |>
+  summarise(avg_arr_delay = mean(arr_delay, na.rm = TRUE), .groups = "drop") |>
+  arrange(distance_group)
+
+avg_delay
+```
+
+```{r}
+#| label: fig-avg-delay
+#| fig-cap: "Average arrival delay by flight distance group (NYC 2013)"
+ggplot(avg_delay, aes(x = distance_group, y = avg_arr_delay, fill = distance_group)) +
+  geom_col(show.legend = FALSE) +
+  labs(x = "Flight Distance Category",
+       y = "Average Arrival Delay (minutes)")
+```
